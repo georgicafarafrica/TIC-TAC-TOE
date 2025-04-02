@@ -153,7 +153,7 @@ int main(){
   int x = 0,y = 0;
   int memorizeX = 0, memorizeY = 0;
   InitWindow(900,900, "TIC-TAC-TOE"); 
-  SetWindowPosition(GetScreenWidth(),-GetScreenHeight());
+  SetWindowPosition(GetScreenWidth()-300,-GetScreenHeight());
   SetTargetFPS(60);
   InitialiseBigBoard();
   InitialiseSmallBoards();
@@ -161,8 +161,9 @@ int main(){
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
     	x = GetMouseX() ;
     	y = GetMouseY();
+	CheckOneBoardWinner();
 	if (!EmptyCells()){
-	  if (x > (memorizeX%3) * 300 && x < ((memorizeX%3) * 300)+300 && y > (memorizeY%3)*300 && y < (memorizeY % 3)*300 + 300 ){
+	  if (x > (memorizeX%3) * 300 && x < ((memorizeX%3) * 300)+300 && y > (memorizeY%3)*300 && y < ((memorizeY % 3)*300 + 300) && (tct.squares[y/300][x/300].values == -1)){
 	    MouseControl(x/100,y/100);
 	    memorizeX = x/100;
 	    memorizeY = y/100;
@@ -174,11 +175,11 @@ int main(){
 	  memorizeY = y/100;
 	}
     }
+    CheckOneBoardWinner();
     BeginDrawing();
-    if (!EmptyCells())
+    if (!EmptyCells()  && (tct.squares[y/300][x/300].values == -1))
 	DrawRectangle(((memorizeX)%3)*300,((memorizeY)%3)*300,300,300,LIME);
     DrawTable();
-    CheckOneBoardWinner();
     int playerW = CheckActualWinner();
     if (playerW != -1){
       if (playerW == 1)
