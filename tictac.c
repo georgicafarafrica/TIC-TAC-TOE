@@ -33,13 +33,12 @@ void InitialiseSmallBoards(){
     } 
   }
 }
-void DeactivateWinningBoard(int a, int b){
-      for (int i = 0; i < SMALLBOARD_SIZE; i++){
-	for (int j = 0; j < SMALLBOARD_SIZE; j++)
-	  if (tct.squares[a][b].smallBoard[i][j].value != 0 && tct.squares[a][b].smallBoard[i][j].value != 1)
-	    tct.squares[a][b].smallBoard[i][j].value = -2;
+/*void DeactivateBoard(){
+  for (int i = 0; i < SMALLBOARD_SIZE; i++){
+	  for (int j = 0; j < SMALLBOARD_SIZE; j++)
+	    tct.squares[i][j].values = -2;
   }
-}
+}*/
 int player = 1; // 1 pentru X, 0 pentru 0
 int CheckOneBoardWinner(){
   for (int a = 0; a < SMALLBOARD_SIZE; a++){
@@ -95,14 +94,24 @@ void DrawTable(){
   }
    for (int i = 0; i < SMALLBOARD_SIZE;i++){
      for (int j = 0; j < SMALLBOARD_SIZE; j++){
+      if (tct.squares[i][j].values == -1){
        DrawLineEx((Vector2){j*300+100,i*300+15},(Vector2){j*300+100,(i+1)*300-15},5, WHITE); // VERTICALA
        DrawLineEx((Vector2){j*300+200,i*300+15},(Vector2){j*300+200,(i+1)*300-15},5, WHITE); // VERTICALA
        DrawLineEx((Vector2){j*300+15,(i*300)+100},(Vector2){(j+1)*300-15,(i*300)+100},5, WHITE);
        DrawLineEx((Vector2){j*300+15,(i*300)+200},(Vector2){(j+1)*300-15,(i*300)+200},5, WHITE);
-    }
+      }
+      if (tct.squares[i][j].values == 1){
+       DrawLineEx ((Vector2){j*300 + 25, i * 300 + 25}, (Vector2){j * 300  + 275, i* 300 + 275},15, GOLD);
+	     DrawLineEx ((Vector2){j * 300 + 275,i * 300 + 25},(Vector2){j * 300 + 25, i * 300 + 275},15, GOLD);
+      }
+      if (tct.squares[i][j].values == 0){
+        DrawRing((Vector2){j*300 + 150,i * 300 + 150},120,130,0,360,100,BLUE);
+      }
+     }
    }
    for (int a = 0; a < SMALLBOARD_SIZE;a++){
      for (int b = 0; b < SMALLBOARD_SIZE; b++){
+      if (tct.squares[a][b].values == -1){
        for (int i = 0; i < SMALLBOARD_SIZE; i++){
 	 for (int j = 0; j < SMALLBOARD_SIZE; j++){
 	   if (tct.squares[a][b].smallBoard[i][j].value == 1){
@@ -113,6 +122,7 @@ void DrawTable(){
 	     DrawRing((Vector2){b*300 + j*100+50,a * 300 + i*100+50},35,40,0,360,100,BLUE);
 	 }
        }
+      }
      }
    }
 }
@@ -143,31 +153,60 @@ int NoMoreCells(){
   for (int a = 0; a < SMALLBOARD_SIZE;a++)
     for (int b = 0; b < SMALLBOARD_SIZE; b++)
       for (int i = 0; i < SMALLBOARD_SIZE;i++)
-	for (int j = 0;j < SMALLBOARD_SIZE;j++)
+	      for (int j = 0;j < SMALLBOARD_SIZE;j++)
 	  if (tct.squares[a][b].smallBoard[i][j].value == -1)
 	    return 0;
   return 1;
 }
 
+int IsSquareFull(int x, int y){
+  for (int i = 0; i < SMALLBOARD_SIZE;i++)
+	      for (int j = 0;j < SMALLBOARD_SIZE;j++)
+          if (tct.squares[y%3][x%3].smallBoard[i][j].value == -1)
+            return 0;
+  return 1;
+}
+
+int SquareAvailability(int x, int y){
+  if (tct.squares[y%3][x%3].values == -1)
+    return 1;
+  return 0;
+}
+
+void ResetGame(){
+  InitialiseBigBoard();
+  InitialiseSmallBoards();
+  player = 1;
+}
+
 int main(){
   int x = 0,y = 0;
   int memorizeX = 0, memorizeY = 0;
-  InitWindow(900,900, "TIC-TAC-TOE"); 
+  InitWindow(1100,900, "TIC-TAC-TOE"); 
   SetWindowPosition(GetScreenWidth()-300,-GetScreenHeight());
   SetTargetFPS(60);
   InitialiseBigBoard();
   InitialiseSmallBoards();
   while(!WindowShouldClose()){
+    if (player == 1)
+      DrawText("X turn :",910,50,40,WHITE);
+    else
+      DrawText("0 turn :",910,50,40,WHITE);
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
     	x = GetMouseX() ;
     	y = GetMouseY();
 	CheckOneBoardWinner();
-	if (!EmptyCells()){
-	  if (x > (memorizeX%3) * 300 && x < ((memorizeX%3) * 300)+300 && y > (memorizeY%3)*300 && y < ((memorizeY % 3)*300 + 300) && (tct.squares[y/300][x/300].values == -1)){
+	if (!EmptyCells() && SquareAvailability(memorizeX,memorizeY) && !IsSquareFull(memorizeX,memorizeY)){
+	  if (x > (memorizeX%3) * 300 && x < ((memorizeX%3) * 300)+300 && y > (memorizeY%3)*300 && y < ((memorizeY % 3)*300 + 300)){// && (tct.squares[(y/100)%3][(x/100)%3].values == -1)){
 	    MouseControl(x/100,y/100);
 	    memorizeX = x/100;
 	    memorizeY = y/100;
 	  }
+    /*else if(!SquareAvailability(x/100,y/100)){
+      MouseControl(x/100,y/100);
+	    memorizeX = x/100;
+	    memorizeY = y/100;
+    }*/
 	}
 	else{
 	  MouseControl(x/100,y/100);
@@ -177,18 +216,22 @@ int main(){
     }
     CheckOneBoardWinner();
     BeginDrawing();
-    if (!EmptyCells()  && (tct.squares[y/300][x/300].values == -1))
-	DrawRectangle(((memorizeX)%3)*300,((memorizeY)%3)*300,300,300,LIME);
+    if (!EmptyCells() && SquareAvailability(memorizeX,memorizeY) && !IsSquareFull(memorizeX,memorizeY)) //&& SquareAvailability(x/100,y/100))//  && (tct.squares[(y/100)%3][(x/100)%3].values == -1))
+	    DrawRectangle(((memorizeX)%3)*300,((memorizeY)%3)*300,300,300,LIME);
     DrawTable();
     int playerW = CheckActualWinner();
     if (playerW != -1){
       if (playerW == 1)
-	DrawText("PLAYER X WON !!!", 220, 250, 40, MAGENTA);
+	      DrawText("PLAYER X WON !!!", 350, 450, 60, GREEN);
       if (playerW == 0)
-	DrawText("PLAYER 0 WON !!!", 220, 250, 40, MAGENTA);
+	      DrawText("PLAYER 0 WON !!!", 350, 450, 60, GREEN);
       
     }
-    EndDrawing();
+    if (NoMoreCells())
+      DrawText("REMIZA !!!", 350, 450, 60, GREEN);
+    if (IsKeyPressed('R'))
+      ResetGame();
+  EndDrawing();
   }
   CloseWindow();
   return 0;
